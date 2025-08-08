@@ -1,6 +1,9 @@
-import os, sys, threading, tkinter as tk
-from tkinter import ttk, messagebox
+# downloader_tk.py – moderne GUI mit ttkbootstrap
+import os, sys, threading
 from yt_dlp import YoutubeDL
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
+from tkinter import messagebox
 
 HOME = os.path.expanduser("~")
 MUSIC_DIR = os.path.join(HOME, "Music")
@@ -43,105 +46,91 @@ def build_opts(fmt: str, quality: str, progress_hook):
         })
     return opts
 
-class App(tk.Tk):
+class App(tb.Window):
     def __init__(self):
-        super().__init__()
-        self.title("YouTube Downloader")
-        self.geometry("640x240")
-        self.minsize(640, 240)
-        self.configure(padx=14, pady=12)
+        # Theme: „flatly“ ist hell, „darkly“ ist dunkel – du kannst jeden ttkbootstrap-Style nehmen
+        super().__init__(title="YouTube Downloader", themename="flatly")  # probier auch: "darkly", "cyborg", "morph"
+        self.geometry("720x300")
+        self.minsize(680, 280)
+        self.place_widgets()
 
-        # Theme & Styles
-        self.style = ttk.Style(self)
-        try:
-            self.style.theme_use("clam")
-        except tk.TclError:
-            pass
-        self.style.configure("Header.TLabel", font=("Segoe UI", 14, "bold"))
-        self.style.configure("Body.TLabel", font=("Segoe UI", 10))
-        self.style.configure("Body.TButton", font=("Segoe UI", 10))
-        self.style.configure("Status.TLabel", font=("Segoe UI", 10))
-        self.create_widgets()
+    def place_widgets(self):
+        pad = {"padx": 10, "pady": 8}
 
-    def create_widgets(self):
-        pad = {"padx": 6, "pady": 6}
+        # Header
+        self.label = tb.Label(self, text="🎬  YouTube Downloader", font=("Segoe UI", 18, "bold"))
+        self.label.grid(row=0, column=0, columnspan=6, sticky="w", **pad)
 
-        ttk.Label(self, text="🎬  YouTube Downloader", style="Header.TLabel").grid(
-            row=0, column=0, columnspan=5, sticky="w", **pad
-        )
+        # URL
+        tb.Label(self, text="YouTube-URL").grid(row=1, column=0, sticky="w", **pad)
+        self.url_var = tb.StringVar()
+        self.url_entry = tb.Entry(self, textvariable=self.url_var, width=70)
+        self.url_entry.grid(row=1, column=1, columnspan=5, sticky="we", **pad)
 
-        ttk.Label(self, text="YouTube-URL", style="Body.TLabel").grid(row=1, column=0, sticky="w", **pad)
-        self.url_var = tk.StringVar()
-        self.url_entry = ttk.Entry(self, textvariable=self.url_var)
-        self.url_entry.grid(row=1, column=1, columnspan=4, sticky="we", **pad)
-
-        ttk.Label(self, text="Format", style="Body.TLabel").grid(row=2, column=0, sticky="w", **pad)
-        self.fmt_var = tk.StringVar(value="MP3")
-        self.fmt_combo = ttk.Combobox(self, textvariable=self.fmt_var, values=["MP3", "MP4"],
-                                      state="readonly", width=8)
+        # Format
+        tb.Label(self, text="Format").grid(row=2, column=0, sticky="w", **pad)
+        self.fmt_var = tb.StringVar(value="MP3")
+        self.fmt_combo = tb.Combobox(self, textvariable=self.fmt_var, values=["MP3", "MP4"], state="readonly", width=10)
         self.fmt_combo.grid(row=2, column=1, sticky="w", **pad)
         self.fmt_combo.bind("<<ComboboxSelected>>", self.refresh_quality)
 
-        ttk.Label(self, text="Qualität", style="Body.TLabel").grid(row=2, column=2, sticky="e", **pad)
-        self.q_var = tk.StringVar(value="320")
-        self.q_combo = ttk.Combobox(self, textvariable=self.q_var, state="readonly", width=8)
+        # Qualität
+        tb.Label(self, text="Qualität").grid(row=2, column=2, sticky="e", **pad)
+        self.q_var = tb.StringVar(value="320")
+        self.q_combo = tb.Combobox(self, textvariable=self.q_var, state="readonly", width=10)
         self.q_combo.grid(row=2, column=3, sticky="w", **pad)
 
-        self.theme_var = tk.BooleanVar(value=False)
-        theme_chk = ttk.Checkbutton(self, text="Dark Mode", variable=self.theme_var, command=self.toggle_theme)
-        theme_chk.grid(row=2, column=4, sticky="e", **pad)
+        # Theme-Toggle
+        self.dark_var = tb.BooleanVar(value=False)
+        self.dark_chk = tb.Checkbutton(self, text="Dark Mode", variable=self.dark_var, bootstyle="secondary-round-toggle", command=self.toggle_theme)
+        self.dark_chk.grid(row=2, column=5, sticky="e", **pad)
 
-        self.progress = ttk.Progressbar(self, mode="determinate", maximum=100)
-        self.progress.grid(row=3, column=0, columnspan=5, sticky="we", padx=6)
+        # Progress + Status
+        self.progress = tb.Progressbar(self, mode="determinate", maximum=100, bootstyle="info-striped")
+        self.progress.grid(row=3, column=0, columnspan=6, sticky="we", padx=10)
 
-        self.status = ttk.Label(self, text="", style="Status.TLabel")
-        self.status.grid(row=4, column=0, columnspan=5, sticky="w", **pad)
+        self.status = tb.Label(self, text="", bootstyle="success")
+        self.status.grid(row=4, column=0, columnspan=6, sticky="w", **pad)
 
-        self.dl_btn = ttk.Button(self, text="⭳  Download starten", style="Body.TButton", command=self.on_download)
+        # Buttons
+        self.dl_btn = tb.Button(self, text="⭳  Download starten", bootstyle=SUCCESS, command=self.on_download)
         self.dl_btn.grid(row=5, column=0, columnspan=3, sticky="w", **pad)
 
-        self.open_btn = ttk.Button(self, text="📂 Ordner öffnen", style="Body.TButton",
-                                   command=self.open_target, state="disabled")
-        self.open_btn.grid(row=5, column=3, columnspan=2, sticky="e", **pad)
+        self.open_btn = tb.Button(self, text="📂 Ordner öffnen", bootstyle=SECONDARY, command=self.open_target, state="disabled")
+        self.open_btn.grid(row=5, column=3, columnspan=3, sticky="e", **pad)
 
-        self.columnconfigure(1, weight=1)
-        self.columnconfigure(2, weight=0)
-        self.columnconfigure(3, weight=0)
-        self.columnconfigure(4, weight=0)
+        # Grid behaviour
+        for c in (1, 2, 3, 4):
+            self.columnconfigure(c, weight=1)
+
         self.refresh_quality()
         self.url_entry.focus()
 
     def refresh_quality(self, *_):
         if self.fmt_var.get() == "MP3":
-            self.q_combo["values"] = ["128", "192", "256", "320"]
-            if self.q_var.get() not in self.q_combo["values"]:
+            vals = ["128", "192", "256", "320"]
+            self.q_combo.config(values=vals)
+            if self.q_var.get() not in vals:
                 self.q_var.set("192")
         else:
-            self.q_combo["values"] = ["480", "720", "1080", "1440", "2160"]
-            if self.q_var.get() not in self.q_combo["values"]:
+            vals = ["480", "720", "1080", "1440", "2160"]
+            self.q_combo.config(values=vals)
+            if self.q_var.get() not in vals:
                 self.q_var.set("1080")
 
     def toggle_theme(self):
-        # einfacher Dark/Light Wechsel
-        self.style.theme_use("clam" if not self.theme_var.get() else "alt")
-        # kleines Dark-Feeling: Hintergrund abdunkeln
-        bg = "#1f1f1f" if self.theme_var.get() else self.cget("bg")
-        try:
-            self.configure(bg=bg)
-        except tk.TclError:
-            pass
+        self.style.theme_use("darkly" if self.dark_var.get() else "flatly")
 
     def progress_hook(self, d):
-        # Fortschritt von yt-dlp (download bzw. postprocessing)
         if d.get("status") == "downloading":
             p = d.get("_percent_str", "").strip().replace("%", "")
             try:
                 self.progress["value"] = float(p)
             except Exception:
                 pass
-            self.status.config(text=f"📥 Lädt… {d.get('_percent_str','')}")
+            self.status.config(text=f"📥 Lädt… {d.get('_percent_str','')}", bootstyle="info")
         elif d.get("status") == "finished":
-            self.status.config(text="🔁 Verarbeite… (ffmpeg)")
+            self.status.config(text="🔁 Verarbeite… (ffmpeg)", bootstyle="warning")
             self.progress["value"] = 100
 
     def on_download(self):
@@ -149,27 +138,25 @@ class App(tk.Tk):
         if not url:
             messagebox.showerror("Fehler", "Bitte eine YouTube-URL eingeben.")
             return
-
         self.progress["value"] = 0
         self.open_btn.config(state="disabled")
-        self.status.config(text="Startet…")
-        self.dl_btn.state(["disabled"])
+        self.status.config(text="Startet…", bootstyle="secondary")
+        self.dl_btn.configure(state=DISABLED)
 
         def worker():
-            fmt = self.fmt_var.get()
-            qual = self.q_var.get()
+            fmt, qual = self.fmt_var.get(), self.q_var.get()
             try:
                 opts = build_opts(fmt, qual, self.progress_hook)
                 with YoutubeDL(opts) as ydl:
                     ydl.download([url])
                 target = MUSIC_DIR if fmt == "MP3" else VIDEO_DIR
-                self.status.config(text=f"✅ Fertig! Gespeichert in: {target}")
-                self.open_btn.config(state="normal")
+                self.status.config(text=f"✅ Fertig! Gespeichert in: {target}", bootstyle="success")
+                self.open_btn.config(state=NORMAL)
                 self.last_target = target
             except Exception as e:
-                self.status.config(text=f"❌ Fehler: {e}")
+                self.status.config(text=f"❌ Fehler: {e}", bootstyle="danger")
             finally:
-                self.dl_btn.state(["!disabled"])
+                self.dl_btn.configure(state=NORMAL)
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -194,9 +181,10 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
-        import traceback
-        root = tk.Tk(); root.withdraw()
+    except Exception:
+        import traceback, tkinter as tk
+        from tkinter import messagebox
+        r = tk.Tk(); r.withdraw()
         messagebox.showerror("Fehler beim Start", traceback.format_exc())
-        root.destroy()
+        r.destroy()
         raise
