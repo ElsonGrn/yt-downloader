@@ -12,7 +12,7 @@ Die Downloads werden automatisch im Standard-**Musik-** oder **Videos**-Ordner g
 - **Fortschrittsbalken** und Statusanzeige
 - **Ordner öffnen**-Button nach Fertigstellung
 - Optional **Dark Mode** aktivierbar
-- Komplett **portable** (FFmpeg kann mit eingebaut werden)
+- Komplett **portable**
 
 ---
 
