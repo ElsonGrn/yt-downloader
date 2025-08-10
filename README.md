@@ -19,7 +19,7 @@ Die Downloads werden automatisch im Standard-**Musik-** oder **Videos**-Ordner g
 ## 📥 Installation & Start
 
 ### 1. Fertige EXE starten
-Falls du die fertige `ytdl_modern.exe` hast:
+Falls du die fertige `ytdl_1.3.exe` hast:
 - **Doppelklick** starten
 - Keine Installation nötig (wenn FFmpeg gebündelt wurde)
 
