@@ -4,7 +4,7 @@
 a = Analysis(
     ['downloader_tk.py'],
     pathex=[],
-    binaries=[('C:\\ffmpeg\\bin\\ffmpeg.exe', 'ffmpeg'), ('C:\\ffmpeg\\bin\\ffprobe.exe', 'ffmpeg')],
+    binaries=[('.\\ffmpeg\\bin\\ffmpeg.exe', 'ffmpeg'), ('.\\ffmpeg\\bin\\ffprobe.exe', 'ffmpeg')],
     datas=[],
     hiddenimports=[],
     hookspath=[],
